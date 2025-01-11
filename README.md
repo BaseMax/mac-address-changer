@@ -60,7 +60,7 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ## Author
 
-- **Mx BASE**  
+- **MAX BASE**  
   GitHub: [https://github.com/BaseMax](https://github.com/BaseMax)
 
 ## Copyright
