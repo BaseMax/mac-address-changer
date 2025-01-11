@@ -65,4 +65,4 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ## Copyright
 
-Copyright 2025, Mx BASE.
+Copyright 2025, Max Base.
