@@ -3,11 +3,12 @@ import re
 import argparse
 import os
 import sys
+from typing import Optional
 
-def is_windows():
+def is_windows() -> bool:
     return os.name == 'nt' or sys.platform.startswith('win')
 
-def is_admin():
+def is_admin() -> bool:
     if is_windows():
         try:
             return os.getuid() == 0
@@ -17,7 +18,7 @@ def is_admin():
     else:
         return os.geteuid() == 0
 
-def get_current_mac(interface):
+def get_current_mac(interface: str) -> Optional[str]:
     try:
         if is_windows():
             result = subprocess.check_output(
@@ -38,7 +39,7 @@ def get_current_mac(interface):
         print(f"[-] Error getting current MAC address: {e}")
         return None
 
-def change_mac(interface, new_mac):
+def change_mac(interface: str, new_mac: str) -> None:
     try:
         print(f"[+] Changing MAC address for {interface} to {new_mac}")
         if is_windows():
@@ -51,10 +52,10 @@ def change_mac(interface, new_mac):
     except subprocess.CalledProcessError as e:
         print(f"[-] Failed to change MAC address: {e}")
 
-def validate_mac(mac):
+def validate_mac(mac: str) -> bool:
     return bool(re.fullmatch(r"(?:[0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}", mac))
 
-def main():
+def main() -> None:
     if not is_admin():
         print("[-] This script must be run as an administrator.")
         sys.exit(1)
