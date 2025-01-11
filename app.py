@@ -4,9 +4,11 @@ import argparse
 import os
 import sys
 
+def is_windows():
+    return os.name == 'nt' or sys.platform.startswith('win')
+
 def is_admin():
-    """Check if the script is running with administrative privileges."""
-    if os.name == 'nt':
+    if is_windows():
         try:
             return os.getuid() == 0
         except AttributeError:
@@ -16,9 +18,8 @@ def is_admin():
         return os.geteuid() == 0
 
 def get_current_mac(interface):
-    """Retrieve the current MAC address of the specified network interface."""
     try:
-        if os.name == 'nt':
+        if is_windows():
             result = subprocess.check_output(
                 ["getmac"], text=True, stderr=subprocess.STDOUT
             )
@@ -38,10 +39,9 @@ def get_current_mac(interface):
         return None
 
 def change_mac(interface, new_mac):
-    """Change the MAC address of the specified network interface to the new MAC address."""
     try:
         print(f"[+] Changing MAC address for {interface} to {new_mac}")
-        if os.name == 'nt':
+        if is_windows():
             subprocess.run(["netsh", "interface", "set", "interface", interface, "newaddress", new_mac], check=True)
         else:
             subprocess.run(["sudo", "ifconfig", interface, "down"], check=True)
@@ -52,33 +52,20 @@ def change_mac(interface, new_mac):
         print(f"[-] Failed to change MAC address: {e}")
 
 def validate_mac(mac):
-    """Validate the MAC address format."""
-    return re.match(r"(?:[0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$", mac) is not None
-
-def display_mac_change_status(interface, old_mac, new_mac):
-    """Display the status of the MAC address change."""
-    updated_mac = get_current_mac(interface)
-    if updated_mac == new_mac:
-        print(f"[+] MAC address successfully updated to {updated_mac}")
-    else:
-        print(f"[-] MAC address change failed. Current MAC: {updated_mac if updated_mac else 'Unknown'}")
-
-def parse_arguments():
-    """Parse command-line arguments."""
-    parser = argparse.ArgumentParser(description="Change your MAC address.")
-    parser.add_argument("-i", "--interface", required=True, help="Network interface to modify.")
-    parser.add_argument("-m", "--mac", required=True, help="New MAC address to assign.")
-    return parser.parse_args()
+    return bool(re.fullmatch(r"(?:[0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}", mac))
 
 def main():
     if not is_admin():
         print("[-] This script must be run as an administrator.")
         sys.exit(1)
 
-    args = parse_arguments()
+    parser = argparse.ArgumentParser(description="Change your MAC address.")
+    parser.add_argument("-i", "--interface", required=True, help="Network interface to modify.")
+    parser.add_argument("-m", "--mac", required=True, help="New MAC address to assign.")
+    args = parser.parse_args()
 
     if not validate_mac(args.mac):
-        print("[-] Invalid MAC address format. Please provide a valid MAC address (e.g., 00:11:22:33:44:55).")
+        print("[-] Invalid MAC address format. Please provide a valid MAC address.")
         sys.exit(1)
 
     current_mac = get_current_mac(args.interface)
@@ -86,7 +73,12 @@ def main():
         print(f"[+] Current MAC address for {args.interface}: {current_mac}")
 
     change_mac(args.interface, args.mac)
-    display_mac_change_status(args.interface, current_mac, args.mac)
+
+    updated_mac = get_current_mac(args.interface)
+    if updated_mac == args.mac:
+        print(f"[+] MAC address successfully updated to {updated_mac}")
+    else:
+        print(f"[-] MAC address change failed.")
 
 if __name__ == "__main__":
     main()
